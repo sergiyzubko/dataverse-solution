@@ -1,27 +1,22 @@
-# Dataverse Solution .gitignore
+# Dataverse Solution Repository .gitignore
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# Power Platform CLI
+.pac/
+auth.json
 
-# Node.js dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Solution files (uncomment if you want to exclude solution files from git)
+# *.zip
 
-# Build outputs
-dist/
-build/
-out/
+# Temporary files
+*.tmp
+*.temp
+*.log
 
-# IDE and editor files
+# IDE files
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
 # OS generated files
 .DS_Store
@@ -32,34 +27,31 @@ out/
 ehthumbs.db
 Thumbs.db
 
-# Logs
-logs
-*.log
+# Node.js (if using npm packages)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Coverage directory used by tools like istanbul
-coverage/
+# Build outputs
+dist/
+build/
+out/
 
-# Temporary folders
-tmp/
-temp/
+# Backup files
+*.bak
+*.backup
+*~
 
-# Dataverse specific
-*.zip
-*.cab
-*.msi
+# PowerShell
+*.ps1.log
 
-# Power Platform specific
-*.unmanaged.zip
-*.managed.zip
-
-# Connection references (may contain sensitive data)
-connection-references.json
-
-# Local development files
-local.settings.json
+# Azure DevOps
+.azdo/

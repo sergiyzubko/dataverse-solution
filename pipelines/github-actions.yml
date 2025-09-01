@@ -1,0 +1,112 @@
+name: Dataverse Solution CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  SOLUTION_NAME: "YourSolutionName"
+  ENVIRONMENT_URL: ${{ secrets.DATAVERSE_URL }}
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+  TENANT_ID: ${{ secrets.TENANT_ID }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Authenticate with Dataverse
+      run: |
+        pac auth create --name "CIEnvironment" --url ${{ env.ENVIRONMENT_URL }} --clientId ${{ env.CLIENT_ID }} --clientSecret ${{ env.CLIENT_SECRET }} --tenantId ${{ env.TENANT_ID }}
+        
+    - name: List solutions
+      run: |
+        pac solution list
+        
+    - name: Export solution
+      run: |
+        pac solution export --path ./solutions/${{ env.SOLUTION_NAME }}.zip --name ${{ env.SOLUTION_NAME }}
+        
+    - name: Upload solution artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: solution-artifact
+        path: ./solutions/
+        
+  deploy-to-dev:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Download solution artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: solution-artifact
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Authenticate with Dev Environment
+      run: |
+        pac auth create --name "DevEnvironment" --url ${{ secrets.DEV_ENVIRONMENT_URL }} --clientId ${{ env.CLIENT_ID }} --clientSecret ${{ env.CLIENT_SECRET }} --tenantId ${{ env.TENANT_ID }}
+        
+    - name: Import solution to Dev
+      run: |
+        pac solution import --path ./solutions/${{ env.SOLUTION_NAME }}.zip
+        
+  deploy-to-prod:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Download solution artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: solution-artifact
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Authenticate with Prod Environment
+      run: |
+        pac auth create --name "ProdEnvironment" --url ${{ secrets.PROD_ENVIRONMENT_URL }} --clientId ${{ env.CLIENT_ID }} --clientSecret ${{ env.CLIENT_SECRET }} --tenantId ${{ env.TENANT_ID }}
+        
+    - name: Import solution to Prod
+      run: |
+        pac solution import --path ./solutions/${{ env.SOLUTION_NAME }}.zip

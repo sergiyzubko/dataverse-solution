@@ -1,51 +1,79 @@
-# Dataverse Solution
+# Dataverse Solution Repository
 
-This repository contains a Microsoft Dataverse solution with comprehensive documentation, flows, plugins, and configuration files.
+This repository contains Dataverse solutions and related artifacts for development, testing, and deployment.
 
 ## Project Structure
 
 ```
-dataverse-solution/
-├── docs/                    # Documentation
-│   ├── alm.md              # Application Lifecycle Management
-│   ├── automations.md      # Automation documentation
-│   ├── choices.md          # Choice fields and options
-│   ├── data-dictionary.md  # Data dictionary
-│   ├── erd.dbml           # Entity Relationship Diagram
-│   ├── relationships.md    # Entity relationships
-│   └── security-model.md   # Security model documentation
-├── env/                    # Environment configuration
-│   ├── connection-references.md
-│   └── environment-variables.md
-├── flows/                  # Power Automate flows
-├── plugins/                # Custom plugins
-│   ├── src/               # Source code
-│   └── tests/             # Test files
-└── solutions/             # Dataverse solution files
-    └── src/               # Solution source files
+├── solutions/           # Dataverse solution files (.zip)
+├── scripts/            # PowerShell and other automation scripts
+├── docs/              # Documentation and guides
+├── templates/         # Solution templates and configurations
+├── pipelines/         # CI/CD pipeline definitions
+└── tools/            # Development tools and utilities
 ```
 
-## Getting Started
+## Prerequisites
 
-1. Clone this repository
-2. Review the documentation in the `docs/` folder
-3. Configure your environment variables
-4. Deploy the solution to your Dataverse environment
+- [Power Platform CLI](https://docs.microsoft.com/en-us/power-platform/developer/cli/introduction)
+- [Visual Studio Code](https://code.visualstudio.com/) (recommended)
+- [Git](https://git-scm.com/)
+- Access to a Dataverse environment
 
-## Documentation
+## Setup Instructions
 
-- **ALM Guide**: See `docs/alm.md` for Application Lifecycle Management practices
-- **Data Dictionary**: See `docs/data-dictionary.md` for entity and field definitions
-- **Security Model**: See `docs/security-model.md` for security configuration
-- **Entity Relationships**: See `docs/relationships.md` for entity relationships
+1. **Install Power Platform CLI**
+   ```bash
+   npm install -g @microsoft/powerplatform-cli
+   ```
+
+2. **Authenticate with your Dataverse environment**
+   ```bash
+   pac auth create --name "YourEnvironment" --url "https://your-org.crm.dynamics.com"
+   ```
+
+3. **Clone this repository**
+   ```bash
+   git clone <your-github-repo-url>
+   cd <repository-name>
+   ```
+
+## Development Workflow
+
+1. **Create a new solution**
+   ```bash
+   pac solution init --publisher-name "YourPublisher" --publisher-prefix "yp"
+   ```
+
+2. **Add components to your solution**
+   ```bash
+   pac solution add-reference --path ./path/to/your/project
+   ```
+
+3. **Build and export solution**
+   ```bash
+   pac solution build
+   pac solution export --path ./solutions/
+   ```
 
 ## Contributing
 
 1. Create a feature branch from `main`
 2. Make your changes
-3. Update documentation as needed
-4. Submit a pull request
+3. Test your solution
+4. Create a pull request
+
+## Deployment
+
+Solutions can be deployed using:
+- Power Platform CLI
+- Azure DevOps pipelines
+- GitHub Actions
 
 ## License
 
 [Add your license information here]
+
+## Support
+
+For questions and support, please contact [your-team-email@company.com]

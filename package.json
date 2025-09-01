@@ -1,0 +1,41 @@
+{
+  "name": "dataverse-solutions",
+  "version": "1.0.0",
+  "description": "Dataverse solution repository for development and deployment",
+  "main": "index.js",
+  "scripts": {
+    "setup": "npm install -g @microsoft/powerplatform-cli",
+    "auth:list": "pac auth list",
+    "auth:clear": "pac auth clear",
+    "solution:list": "pac solution list",
+    "solution:export": "powershell -ExecutionPolicy Bypass -File ./scripts/Export-Solution.ps1",
+    "solution:import": "pac solution import",
+    "test": "echo \"No tests specified\" && exit 0",
+    "build": "echo \"Building solutions...\" && pac solution build",
+    "deploy": "echo \"Deploying solutions...\" && pac solution import"
+  },
+  "keywords": [
+    "dataverse",
+    "power-platform",
+    "dynamics-365",
+    "power-apps",
+    "solutions"
+  ],
+  "author": "Your Name <your-email@company.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@microsoft/powerplatform-cli": "latest"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/dataverse-solutions.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/dataverse-solutions/issues"
+  },
+  "homepage": "https://github.com/your-username/dataverse-solutions#readme"
+}
