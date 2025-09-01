@@ -1,0 +1,97 @@
+name: Pack and Import to Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      solution_name:
+        description: 'Solution name to pack and import'
+        required: true
+        default: 'YourSolutionName'
+      environment_name:
+        description: 'Environment name'
+        required: true
+        default: 'Test'
+  push:
+    branches: [ develop ]
+    paths:
+      - 'solutions/src/**'
+
+env:
+  SOLUTION_NAME: ${{ github.event.inputs.solution_name || 'YourSolutionName' }}
+  ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name || 'Test' }}
+
+jobs:
+  pack-solution:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Create solutions directory
+      run: |
+        mkdir -p ./solutions
+        
+    - name: Pack solution
+      run: |
+        pac solution pack --path ./solutions/src --zipfile ./solutions/${{ env.SOLUTION_NAME }}-test.zip
+        
+    - name: Upload packed solution artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: solution-test-artifact
+        path: ./solutions/${{ env.SOLUTION_NAME }}-test.zip
+        
+  import-to-test:
+    needs: pack-solution
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Download solution artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: solution-test-artifact
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Authenticate with Test Environment
+      run: |
+        pac auth create --name "${{ env.ENVIRONMENT_NAME }}" --url ${{ secrets.TEST_ENVIRONMENT_URL }} --clientId ${{ secrets.CLIENT_ID }} --clientSecret ${{ secrets.CLIENT_SECRET }} --tenantId ${{ secrets.TENANT_ID }}
+        
+    - name: Select Test Environment
+      run: |
+        pac auth select --name "${{ env.ENVIRONMENT_NAME }}"
+        
+    - name: Import solution to Test
+      run: |
+        pac solution import --path ./solutions/${{ env.SOLUTION_NAME }}-test.zip
+        
+    - name: Run tests
+      run: |
+        echo "Running automated tests..."
+        # Add your test commands here
+        # pac test run --path ./tests/
+        
+    - name: Notify test completion
+      run: |
+        echo "Solution imported to Test environment successfully"
+        echo "Manual testing can now begin"

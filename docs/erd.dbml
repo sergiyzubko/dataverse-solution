@@ -1,0 +1,80 @@
+// Entity Relationship Diagram for Dataverse Solution
+// This file documents the database schema and relationships
+
+Table account {
+  accountid uuid [pk]
+  name varchar(160)
+  accountnumber varchar(20)
+  telephone1 varchar(50)
+  emailaddress1 varchar(100)
+  address1_city varchar(80)
+  address1_country varchar(80)
+  createdon datetime
+  modifiedon datetime
+  statecode int
+  statuscode int
+}
+
+Table contact {
+  contactid uuid [pk]
+  parentcustomerid uuid [ref: > account.accountid]
+  firstname varchar(50)
+  lastname varchar(50)
+  emailaddress1 varchar(100)
+  telephone1 varchar(50)
+  jobtitle varchar(100)
+  createdon datetime
+  modifiedon datetime
+  statecode int
+  statuscode int
+}
+
+Table opportunity {
+  opportunityid uuid [pk]
+  parentaccountid uuid [ref: > account.accountid]
+  parentcontactid uuid [ref: > contact.contactid]
+  name varchar(300)
+  estimatedvalue decimal(23,2)
+  estimatedclosedate datetime
+  actualvalue decimal(23,2)
+  actualclosedate datetime
+  stepname varchar(100)
+  createdon datetime
+  modifiedon datetime
+  statecode int
+  statuscode int
+}
+
+Table lead {
+  leadid uuid [pk]
+  parentaccountid uuid [ref: > account.accountid]
+  parentcontactid uuid [ref: > contact.contactid]
+  firstname varchar(50)
+  lastname varchar(50)
+  companyname varchar(160)
+  emailaddress1 varchar(100)
+  telephone1 varchar(50)
+  subject varchar(300)
+  createdon datetime
+  modifiedon datetime
+  statecode int
+  statuscode int
+}
+
+// Custom entities can be added here
+Table custom_entity {
+  custom_entityid uuid [pk]
+  name varchar(100)
+  description text
+  createdon datetime
+  modifiedon datetime
+  statecode int
+  statuscode int
+}
+
+// Relationships
+Ref: contact.parentcustomerid > account.accountid
+Ref: opportunity.parentaccountid > account.accountid
+Ref: opportunity.parentcontactid > contact.contactid
+Ref: lead.parentaccountid > account.accountid
+Ref: lead.parentcontactid > contact.contactid

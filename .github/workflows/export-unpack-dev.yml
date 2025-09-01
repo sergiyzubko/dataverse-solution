@@ -1,0 +1,95 @@
+name: Export and Unpack from Dev
+
+on:
+  workflow_dispatch:
+    inputs:
+      solution_name:
+        description: 'Solution name to export'
+        required: true
+        default: 'YourSolutionName'
+      environment_name:
+        description: 'Environment name'
+        required: true
+        default: 'Development'
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday at 2 AM
+
+env:
+  SOLUTION_NAME: ${{ github.event.inputs.solution_name || 'YourSolutionName' }}
+  ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name || 'Development' }}
+
+jobs:
+  export-from-dev:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Authenticate with Dev Environment
+      run: |
+        pac auth create --name "${{ env.ENVIRONMENT_NAME }}" --url ${{ secrets.DEV_ENVIRONMENT_URL }} --clientId ${{ secrets.CLIENT_ID }} --clientSecret ${{ secrets.CLIENT_SECRET }} --tenantId ${{ secrets.TENANT_ID }}
+        
+    - name: Select Dev Environment
+      run: |
+        pac auth select --name "${{ env.ENVIRONMENT_NAME }}"
+        
+    - name: Export solution from Dev
+      run: |
+        pac solution export --path ./solutions/${{ env.SOLUTION_NAME }}-dev.zip --name ${{ env.SOLUTION_NAME }}
+        
+    - name: Upload solution artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: solution-dev-artifact
+        path: ./solutions/${{ env.SOLUTION_NAME }}-dev.zip
+        
+  unpack-solution:
+    needs: export-from-dev
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Download solution artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: solution-dev-artifact
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Create solutions/src directory
+      run: |
+        mkdir -p ./solutions/src
+        
+    - name: Unpack solution
+      run: |
+        pac solution unpack --path ./solutions/src --zipfile ./solutions/${{ env.SOLUTION_NAME }}-dev.zip
+        
+    - name: Commit unpacked solution
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add ./solutions/src/
+        git commit -m "Update unpacked solution from Dev environment" || echo "No changes to commit"
+        
+    - name: Push changes
+      run: |
+        git push origin main

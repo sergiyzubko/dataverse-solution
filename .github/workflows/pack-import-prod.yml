@@ -1,0 +1,111 @@
+name: Pack and Import to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      solution_name:
+        description: 'Solution name to pack and import'
+        required: true
+        default: 'YourSolutionName'
+      environment_name:
+        description: 'Environment name'
+        required: true
+        default: 'Production'
+  release:
+    types: [published]
+
+env:
+  SOLUTION_NAME: ${{ github.event.inputs.solution_name || 'YourSolutionName' }}
+  ENVIRONMENT_NAME: ${{ github.event.inputs.environment_name || 'Production' }}
+
+jobs:
+  pack-solution:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Create solutions directory
+      run: |
+        mkdir -p ./solutions
+        
+    - name: Pack solution
+      run: |
+        pac solution pack --path ./solutions/src --zipfile ./solutions/${{ env.SOLUTION_NAME }}-prod.zip
+        
+    - name: Upload packed solution artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: solution-prod-artifact
+        path: ./solutions/${{ env.SOLUTION_NAME }}-prod.zip
+        
+  import-to-production:
+    needs: pack-solution
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Download solution artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: solution-prod-artifact
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install Power Platform CLI
+      run: |
+        npm install -g @microsoft/powerplatform-cli
+        
+    - name: Authenticate with Production Environment
+      run: |
+        pac auth create --name "${{ env.ENVIRONMENT_NAME }}" --url ${{ secrets.PROD_ENVIRONMENT_URL }} --clientId ${{ secrets.CLIENT_ID }} --clientSecret ${{ secrets.CLIENT_SECRET }} --tenantId ${{ secrets.TENANT_ID }}
+        
+    - name: Select Production Environment
+      run: |
+        pac auth select --name "${{ env.ENVIRONMENT_NAME }}"
+        
+    - name: Create production backup
+      run: |
+        echo "Creating production backup..."
+        # Add backup commands here if needed
+        # pac solution export --path ./backups/prod-backup-$(date +%Y%m%d-%H%M%S).zip --name ${{ env.SOLUTION_NAME }}
+        
+    - name: Import solution to Production
+      run: |
+        pac solution import --path ./solutions/${{ env.SOLUTION_NAME }}-prod.zip
+        
+    - name: Post-deployment validation
+      run: |
+        echo "Running post-deployment validation..."
+        # Add validation commands here
+        # pac solution list
+        # pac auth list
+        
+    - name: Notify deployment completion
+      run: |
+        echo "Solution deployed to Production environment successfully"
+        echo "Release version: ${{ github.event.release.tag_name }}"
+        echo "Release notes: ${{ github.event.release.body }}"
+        
+    - name: Create deployment tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git tag -a "deploy-${{ github.event.release.tag_name }}" -m "Deployed to production: ${{ github.event.release.tag_name }}"
+        git push origin "deploy-${{ github.event.release.tag_name }}"
