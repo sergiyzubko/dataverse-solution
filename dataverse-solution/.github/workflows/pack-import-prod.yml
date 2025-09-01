@@ -1,0 +1,24 @@
+name: Pack & Import to PROD (Managed)
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  pack-import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PAC
+        run: |
+          dotnet tool install --global Microsoft.PowerApps.CLI.Tool
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Pack solution
+        run: |
+          mkdir -p ./tmp
+          pac solution pack             --zipfile ./tmp/managed.zip             --folder ./solutions/src             --managed true
+      - name: Auth PROD
+        run: |
+          pac auth create --tenant ${{ secrets.PP_TENANT_ID }}             --url ${{ secrets.PP_PROD_ENV_URL }}             --applicationId ${{ secrets.PP_CLIENT_ID }}             --clientSecret ${{ secrets.PP_CLIENT_SECRET }}
+      - name: Import to PROD
+        run: |
+          pac solution import --path ./tmp/managed.zip --activate-plugins true
